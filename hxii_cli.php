@@ -1,6 +1,6 @@
 <?php
 
-namespace hxii;
+namespace hxii\CLI;
 
 class CLI_Helper {
 

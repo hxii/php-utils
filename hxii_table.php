@@ -1,5 +1,7 @@
 <?php
 
+namespace hxii\CLI;
+
 class CLI_Table {
 
     private $header;

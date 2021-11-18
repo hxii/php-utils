@@ -2,7 +2,7 @@
 
 namespace hxii\CLI;
 
-class Options {
+class CLI_Options {
 
     public static $rawArgs;
     public static $options = [];
@@ -31,20 +31,25 @@ class Options {
         global $argv;
         self::$rawArgs = array_slice($argv, 1); // Remove filename from options
         $this->rawString = implode(' ', self::$rawArgs); // Reconstruct argumemts so that we parse them ourselves
+        // var_dump(self::$rawArgs);
         if (empty($this->rawString)) {
             $this->showHelp();
+            exit();
         }
         $this->parse($this->rawString);
     }
 
     private function parse(string $args) {
         $pairs_pattern = '@((^|\s)-{1,2})@';
-        $ov_pattern = '@(=|\s|,)@';
+        $ov_pattern = '@[\'"]([^\'"]+?)[\'"]|([a-zA-Z0-9\.\-\_\:]+)@';
+        // $ov_pattern = '@(=|\s|,)@';
         $pairs = preg_split($pairs_pattern, $args);
         $pairs = array_filter($pairs);
-        foreach ($pairs as $pair) {
-            $ov = preg_split($ov_pattern, $pair);
-            list($option, $values) = [ltrim($ov[0], '-'), array_slice($ov, 1)];
+        foreach ($pairs as $pair) { 
+            // $ov = preg_split($ov_pattern, $pair);
+            preg_match_all($ov_pattern, $pair, $ov, PREG_PATTERN_ORDER);
+            // list($option, $values) = [ltrim($ov[0], '-'), array_slice($ov, 1)];
+            list($option, $values) = [$ov[0][0], array_slice($ov[0], 1)];
             if (!empty($values)) {
                 if (!array_key_exists($option, self::$options) && !array_key_exists($option, self::$aliases)) {
                     $this->out('error', "Option $option is invalid");
@@ -54,6 +59,7 @@ class Options {
                     // If the alias exists, set the original property instead
                     $option = self::$aliases[$option];
                 }
+                // $this->{$option} = (count($values) > 1) ? $values : $values[0];
                 $this->{$option} = $values;
                 if ($this->is_required($option)) {
                     self::$required = array_diff(self::$required, [$option]); // Remove required option
@@ -160,6 +166,7 @@ class Options {
         printf($maskHeader, $this->color('bold', 'Options'));
         foreach (self::$options as $option => $explanation) {
             $required = $this->is_required($option) ? ' (Required)' : '';
+            $explanation = str_replace("\n", "\n".str_repeat(' ', $len), $explanation);
             printf($maskOption, '--'.$option, $explanation . $required);
             $aliases = array_keys(self::$aliases, $option);
             if (!empty($aliases)) {

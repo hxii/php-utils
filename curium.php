@@ -4,13 +4,15 @@ namespace hxii;
 
 class Curium {
     
-    function makeRequest(string $type = 'GET', string $url, $payload = null, $extraOpts = null) {
+    function makeRequest(string $type = 'GET', string $url = 'https', $payload = null, $extraOpts = null) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_setopt($ch, CURLOPT_TIMEOUT, 400);
-        if ('POST' === $type && $payload) {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $type);
+        // if ('POST' === $type && $payload) {
+        if (isset($payload) && !empty($payload)) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
             curl_setopt($ch, CURLOPT_POST, 1);
             if (is_array($payload)) {
@@ -32,6 +34,14 @@ class Curium {
         } else {
             return $result;
         }
+    }
+
+    function simplePath($json, string $path) {
+        if (is_string($json) || is_object($json)) {
+            $json = json_decode($json, true);
+        }
+        $parts = explode('.', $path);
+        
     }
 
 }

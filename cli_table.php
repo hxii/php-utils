@@ -7,6 +7,7 @@ class CLI_Table {
     private $header;
     private $columns;
     private $table;
+    private $filters;
 
     public function __construct($padding = 1, $borderChars = '╔═╗╠═╣║╚╝') {
         $this->padding = $padding;
@@ -63,9 +64,42 @@ class CLI_Table {
         return $this;
     }
 
+    public function filter(string $filterString) {
+        $this->filters = $this->parseFilters($filterString);
+    }
+
+    private function parseFilters(string $string) {
+        $pattern = "/(?:(?'parameter'\w+):(?'value'(?:\w|\s)+))/";
+        preg_match_all($pattern, $string, $filters, PREG_SET_ORDER);
+        foreach ($filters as &$filter) {
+            $filter = array_filter($filter, "is_string", ARRAY_FILTER_USE_KEY);
+        }
+        foreach ($filters as &$filter) {
+            // if (!in_array($filter['parameter'], $this->data[0])) {
+            //     unset($filter);
+            // } else {
+            //     $filter['index'] = array_search($filter[, haystack)
+            // }
+            if ($index = array_search(strtolower($filter['parameter']), array_map('strtolower', $this->data[0]))) {
+                $filter['index'] = $index;
+            } else {
+                unset($filter);
+            }
+        }
+        var_dump($filters);
+        return $filters;
+    }
+
     public function row(Array $row) {
         if (empty($row)) {
             $row = array_fill(0, $this->columns, '');
+        }
+        if (isset($this->filters)) {
+            foreach ($this->filters as $filter) {
+                if ($row[$filter['index']] !== $filter['value']) {
+                    return $this;
+                }
+            }
         }
         $this->data[] = $row;
 
